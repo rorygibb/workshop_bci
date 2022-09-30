@@ -288,7 +288,7 @@ ggplot() +
 
 # Only 5 plots is a fairly small sample size, and is likely to be very sensitive to natural variability.
 # Usually, larger sample sizes can help us to get more accurate estimates of the true population mean
-# Repeat your code above, but this time take samples of 20 sites. Can you see a difference? How does this vary between the 2 species?
+# e. Repeat your code above, but this time take samples of 20 sites. Can you see a difference? How does this vary between the 2 species?
 
 pa_samp = c()
 for(i in 1:100){ pa_samp = c(pa_samp, mean(sample(dat$count[ dat$species == "Poulsenia armata" ], 20, replace=FALSE))) }
@@ -311,11 +311,10 @@ ggplot() +
 
 
 # Let's look at how this varies across a range of different sample sizes, and between species.
-# The code below writes a function called randomSampleMean which generates 100 sample means of a specified sample 
+# The code below writes a function called randomSampleMean which generates 100 random samples of plots, of a specified size, then calculates the sample mean
+# We run this for various different sample sizes for our two species, and compare the resulting distributions of sample means to the true population mean (which we actually know!)
 
-
-# -------- maybe we give them this code? --------
-
+# MAYBE WE GIVE THEM THIS CODE
 # function to generate 100 sample means from random samples of specified size, for a given species "spp"
 randomSampleMean = function(spp, sample_size){
   
@@ -365,16 +364,21 @@ ggplot(data_for_plot) +
   facet_grid(sample_size~species) + 
   theme_bw()
 
-# -----------------------
 
+# f. Run the code above to simulate sampling the BCI plot for each species across a range of sample sizes.
+# Can you comment on the main differences you can see between the two species? 
+# How relatively big a sample size do you need to get an accurate estimate of the true mean for O. mapora, compared to P. armata?
+# Thinking back to the spatial plot above, how do you think these differences might relate to the differing ecology of the two species?#
 
+# g. The BCI data frame also contains metadata about some key characteristics of each subplot, including habitat type and environmental heterogeneity
+# Explore the data for these two species - what other factors might we need to account for in our sampling or analysis design?
 
+ggplot(dat) + 
+  geom_boxplot(aes(x=Habitat, y=count,  fill=species)) + 
+  facet_wrap(~species)
 
+ggplot(dat) + geom_point(aes(x=EnvHet, y=count, col=species)) 
 
-# So what other factors might be responsible for the strange distribution of counts for P armata?
-# What haven't we taken into account in our sampling design? Explore the data frame and look at some of the other environmental metadata provided
-# Do some of these help us to understand these issues? 
-# What other factors might be useful in our sampling design?
 
 
 
