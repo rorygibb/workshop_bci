@@ -140,7 +140,7 @@ ggplot(dat) + geom_boxplot(aes(x= species, y=count), color="black", fill="coral"
 # We can then use these to compare between species or populations in different areas or experiencing different conditions (e.g. experimental treatments)
 # This usually involves calculating summary parameters describing central tendency (e.g. mean or median) or variation (e.g. standard deviation)
 # It is important to remember that these parameters are simplified descriptions of *distributions of data points* like those we've seen for these two species
-# Calculating these *loses information* - we no longer have all the individual counts, but instead a single parameter that summarises them
+# Calculating these *loses information* - we no longer have all the individual counts, but instead 1 or 2 parameters that summarise them
 # This can be very useful, but it is important to be vigilant around how different metrics are sensitive to the *shape* of the data distribution and so might be more or less appropriate
 # Let's look at this for our two focal species
 
@@ -169,7 +169,9 @@ comp = bci %>%
     median_abund = median(count)
   )
 
-# One way to see what's going on is to visualise this. This code creates boxplots with the mean and median overlaid as points
+comp
+
+# One way to see more clearly what's going on is to visualise this. This code creates boxplots with the mean and median overlaid as points
 # So we can see both the underlying distributions, and the two measures of central tendency calculated from them
 
 # data
@@ -194,9 +196,126 @@ ggplot() +
   xlab("Species") + ylab("Abundance per subplots")
 
 
-# k. Why are the means and medians so different for one species and not the other? 
-# Can you comment on which measures might be more appropriate for describing the central tendency of these data?
+# k. Why are the means and medians so different for one species and not the other, and how is this related to the assumptions you are making when you calculate the mean?
+# Can you comment on which measures might be more appropriate for describing the central tendency of these data for each species?
 # If we were to only calculate and compare the means for these two species, what information would we be losing?
+
+
+
+
+# ================== AN INTRODUCTION TO STATISTICAL DISTRIBUTIONS ==================
+
+# In the previous exercise, we encountered an important challenge in data analysis, which is how to calculate summary parameters to describe our variable of interest
+# Often we will use measures like the mean or the median to summarise the central tendency of a dataset (e.g. the average population density)
+# But their reliability as a measure of central tendency depends on how the underlying variable is *distributed*
+# As we have seen for the O mapora and P armata, if the distribution of data is skewed, this can lead to a skewed estimate of the central tendency
+# (where, in this example, the mean for P armata is strongly influenced by a few very high abundance values, even though abundance in most subplots is lower)
+# This is because, although we may not often consider it, we are making *assumptions* about how the data are distributed when we calculate even a simple measure like the mean
+# Which means that an analysis that compared only the means between the two species would conclude they had a very similar average population density
+# Whereas if we compared the medians, or other metrics that describe their distribution, we would come to quite differnet conclusions
+
+# Statistical distributions are useful tools for formalising these assumptions about how data are distributed
+# They become very important later when we want to statistically test for differences or relationships between variables
+# because they provide a tool to examine the assumptions we are making - such as the problem of skewed data distributions when we are comparing means
+# In this exercise we will examine 2 distributions that are very commonly used in statistics - the normal (Gaussian) and the Poisson distribution
+
+
+# When we calculate the mean as a measure of central tendency, we are assuming that the data are evenly (i.e. symmetrically) distributed around the centre of the distribution
+# This was pretty much the case for O mapora as we saw in the exercise above
+# One distribution that has this kind of even spread is the NORMAL DISTRIBUTION - the classic symmetrical "bell-curve" shaped distribution that is very widely used in statistics
+# Because the normal distribution is perfectly symmmetrical, the mean perfectly describes the central tendency of the distribution,
+# and the standard deviation describes its width (i.e. how widely spread the observations are)
+# With 68% of observations falling within 1 sd of the mean, and 95% falling within 2 sds of the mean
+# So the distribution is described by 2 parameters: the mean (mu) and the standard deviation (sigma)
+
+# a. The rnorm function in R generates random samples from a normal distribution with a specified mean and standard deviation
+# We can use this to generate lots of samples to build up a picture of the distribution's shape
+# Use the line of code below to generate 100 samples from a normal distribution with a mean of 0 and a standard deviation of 1
+# Look at the vector this has created ("norm") then write some code to plot a histogram of the samples
+# Add a vertical line for the mean, and vertical lines for the mean plus/minus 1 standard deviation, and for the mean plus/minus 2 standard deviations
+
+# THIS LINE IS PROVIDED
+normA = rnorm(n=100, mean=0, sd = 1)
+
+# ANSWER
+hist(normA, 25); abline(v=0, col="red"); abline(v=c(-1, 1), col="blue")
+
+ggplot() + 
+  geom_histogram(aes(x=normA), bins=25, fill="grey90", col="black") +
+  geom_vline(xintercept = 0, col="red") +
+  geom_vline(xintercept=c(-1, 1), col="blue") + 
+  theme_bw()
+
+# b. Modify your code from question (a) to instead generate 10,000 samples and save to a vector called "normB"
+# How different does this look from when you generated only 100 samples - why do you think this is?
+normB = rnorm(n=10000, mean=0, sd = 1)
+
+ggplot() + 
+  geom_histogram(aes(x=normB), bins=25, fill="grey90", col="black") +
+  geom_vline(xintercept = 0, col="red") +
+  geom_vline(xintercept=c(-1, 1), col="blue") + 
+  theme_bw()
+
+# The symmetrical nature of the normal distribution means that the mean perfectly describes its central tendency 
+# c. Calculate the mean of these two random samples (normA and normB) - how similar are they to the mean we specified when we generated them using rnorm?
+# If we, as ecologists, went out and collected data on a phenomenon (e.g. tree abundance) that were perfectly normally distributed, 
+# would the mean be an appropriate measure of central tendency? What if the data were more skewed?
+mean(normA)
+mean(normB)
+
+# d. The two parameters - mean and standard deviation - define the position and width of a normal distribution
+# Using the code above, plot a few histograms to explore what happens if you change the mean and the standard deviation parameters
+# (Hint: try changing the sd parameter without changing the mean - what happens?)
+normX = rnorm(n=10000, mean=10, sd = 5)
+ggplot() + 
+  geom_histogram(aes(x=normX), bins=25, fill="grey90", col="black") +
+  theme_bw()
+
+# When we do statistics, we are almost always making assumptions about data distributions, as an approximation of a complex reality
+# Let's take a look in more depth at how well the normal distribution approximates the distribution of our tree species O mapora
+# (Which you will recall was less skewed in distribution than P armata)
+
+# e. Calculate the mean and standard deviation of counts acros all subplots for O mapora
+mean(om$count)
+sd(om$count)
+
+# f. Modify your code above to generate and visualise 50 samples from a normal distribution with the same mean and sd as O mapora
+# (By drawing 50 samples we are mimicking the same sample of 50 subplots as in the BCI data)
+normX = rnorm(n=50, mean=15.76, sd = 7.42)
+ggplot() + 
+  geom_histogram(aes(x=normX), bins=25, fill="grey90", col="black") +
+  theme_bw()
+
+# g. Compare this to the distribution of observed counts for O mapora. How well do you think this real-world sample is approximated by a normal distribution?
+# Do you notice anything about the normal distribution that does not match the ecological reality?
+# (Hint: remember rnorm generates a random sample, so it can be useful to explore re-running the sample a few times)
+ggplot() + 
+  geom_histogram(aes(x=om$count), bins=25, fill="grey90", col="black") +
+  theme_bw()
+
+
+# You may have noticed a few differences between our generated normal distribution values, and the real world sample, such as...
+# Our counts are only whole numbers whereas the normal distribution allows fractional values (but you can't really have 0.3 of a tree) 
+# The normal distribution can produce negative values, whereas we can't have -1 trees
+
+# One distribution that is very commonly used in ecology to approximate count data (discrete numbers) that are non-negative is the POISSON DISTRIBUTION
+# This generates only whole numbers and is constrained to be non-negative
+# The Poisson distribution is described by a single parameter, lambda, that defines both the mean and variance of the distribution
+# Because of this, its shape is less symmetrical than the normal distribution, particularly at low values
+
+# h. The rpois function generates random samples from a Poisson distribution. Generate 1000 samples from a Poisson distribution with lamba (mean) of 15.
+# Look at the vector of samples and plot a histogram, what do you notice?
+rpois(n=1000, lambda=15)
+ggplot() + 
+  geom_histogram(aes(x=rpois(n=50, lambda=15)), fill="grey90", col="black", binwidth = 1) +
+  theme_bw()
+
+# i. Explore how the shape of this distribution changes with different lambda values (hint: look at when lambda is very low)
+# What do you notice compared to a normal distribution?
+
+# j. O mapora has a mean count of 15.7 and P armata has a mean count of 15.1. Compare the distributions of observed counts for these two species,
+# with Poisson distributions generated using the same mean. How similar is each species to a Poisson distribution?
+
 
 
 
@@ -219,14 +338,15 @@ ggplot() +
 # In this exercise we'll explore this, again focusing on our two tree species we looked at in the last exercise
 
 # Firstly, you'll recall that one species had a much wider variance in counts - a more *overdispersed* distribution with more very low and very high values - than the other
-# One excellent way to get a deeper understanding of this is to look at the data spatially
-# In the dataframe we have plot coordinates (in this case columns x_n and y_n) that describe the locations of each subplot
+# One way to get a deeper understanding of this is to look at the data spatially
+# In the dataframe we have plot coordinates (in this case columns x_n and y_n) that describe the grid locations of each subplot
 # We can use this to plot the spatial distribution of tree counts for each of our focal species, and compare the difference
 
 # a. Use ggplot and geom_tile to plot a tile plot of of the abundances of each species per subplot, with x_n and y_n as coordinates
 # Hint: the "fill" aesthetic can be used to scale the tile colour by the species abundances, and facet_wrap can be used to create multipanel plots
 # How would you describe the spatial distribution of each species?
-# Can you speculate on how these differences might affect the reliability of population means calculated from different sample sizes?
+# If we were to sample a subset of the total area, 
+# can you speculate on how these differences might affect the reliability of population means calculated from different sample sizes?
 
 dat = bci[ bci$species %in% c("Poulsenia armata", "Oenocarpus mapora"),  ]
 ggplot(dat) + 
@@ -236,7 +356,7 @@ ggplot(dat) +
   facet_wrap(~species) +
   coord_fixed()
 
-# We know the true population means for these two species across all the 50 plots - we calculated them above
+# We know the true population mean density for these two species across all the 50 plots - we calculated them above
 # (15.1 indivs per plot for P armata, and 15.76 indivs per plot for O mapora)
 # Let's explore how accurate a random sample of plots is at estimating the true population mean
 
@@ -255,7 +375,7 @@ mean(sample(dat$count[ dat$species == "Oenocarpus mapora" ], 5, replace=FALSE))
 # c. Write some code to repeat the sampling process 100 times for each species:
 # Each time, draw a random sample of 5 sites, calculate the sample mean, then add it to a vector
 # At the end you should have a vector of 100 sample means for each species
-# Hint: you will probably need to use a "for" loop for this
+# Hint: you will need to use a "for" loop to do this
 
 pa_samp = c()
 for(i in 1:100){ pa_samp = c(pa_samp, mean(sample(dat$count[ dat$species == "Poulsenia armata" ], 5, replace=FALSE))) }
@@ -286,7 +406,7 @@ ggplot() +
 
 
 
-# Only 5 plots is a fairly small sample size, and is likely to be very sensitive to natural variability.
+# Only 5 plots is a fairly small sample size, and is likely to be very sensitive to natural variability over space.
 # Usually, larger sample sizes can help us to get more accurate estimates of the true population mean
 # e. Repeat your code above, but this time take samples of 20 sites. Can you see a difference? How does this vary between the 2 species?
 
@@ -311,7 +431,7 @@ ggplot() +
 
 
 # Let's look at how this varies across a range of different sample sizes, and between species.
-# The code below writes a function called randomSampleMean which generates 100 random samples of plots, of a specified size, then calculates the sample mean
+# The code below create a function called randomSampleMean which generates 100 random samples of plots, of a specified size, then calculates the sample mean
 # We run this for various different sample sizes for our two species, and compare the resulting distributions of sample means to the true population mean (which we actually know!)
 
 # MAYBE WE GIVE THEM THIS CODE
@@ -341,7 +461,7 @@ pa30 = randomSampleMean(spp = "Poulsenia armata", sample_size = 30)
 om5 = randomSampleMean(spp = "Oenocarpus mapora", sample_size = 5)
 om10 = randomSampleMean(spp = "Oenocarpus mapora", sample_size = 10)
 om20 = randomSampleMean(spp = "Oenocarpus mapora", sample_size = 20)
-om30= randomSampleMean(spp = "Oenocarpus mapora", sample_size = 30)
+om30 = randomSampleMean(spp = "Oenocarpus mapora", sample_size = 30)
 
 # combine and plot
 data_for_plot = do.call(
@@ -367,8 +487,8 @@ ggplot(data_for_plot) +
 
 # f. Run the code above to simulate sampling the BCI plot for each species across a range of sample sizes.
 # Can you comment on the main differences you can see between the two species? 
-# How relatively big a sample size do you need to get an accurate estimate of the true mean for O. mapora, compared to P. armata?
-# Thinking back to the spatial plot above, how do you think these differences might relate to the differing ecology of the two species?#
+# How relatively large a sample size do you need to get an accurate estimate of the true mean for O. mapora, compared to P. armata?
+# Thinking back to the spatial plot above, how do you think these differences might relate to the differing ecology of the two species?
 
 # g. The BCI data frame also contains metadata about some key characteristics of each subplot, including habitat type and environmental heterogeneity
 # Explore the data for these two species - what other factors might we need to account for in our sampling or analysis design?
@@ -382,199 +502,43 @@ ggplot(dat) + geom_point(aes(x=EnvHet, y=count, col=species))
 
 
 
+# ================= FURTHER EXERCISES ==================
 
-# ================= WHAT ARE STATISTICAL DISTRIBUTIONS AND HOW DO THEY HELP US DEAL WITH THESE ISSUES? ===============
+# a. The "vegan" package in R for community ecology, which provides the BCI data as a sample dataset, provides
+# functions to calculate various biodiversity indices. Explore patterns of plot-level alpha diversity in the BCI dataset
+# (hint: you could look at measures such as species richness, Shannon or Simpson diversity).
+# Do the distributions of these different metrics differ? How do they vary between different habitats?
 
-# normal distribution vs oenocarpus
-# poisson distribution vs poulsenia
+###### LOTS THAT COULD BE EXPLORED HERE - ONE EXAMPLE #######
 
-a = rnorm(n = 10000, mean=15.5, sd=7.4)
-hist(a)
-hist(om$count)
-
-
-
-
-dat %>%
-  ggplot() + 
-  geom_point(aes(x, y, size=count, col=count)) + 
-  theme_bw() + 
-  facet_wrap(~species)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-fo = bci[ bci$species == "Trichilia tuberculata", ]
-ggplot(fo) + geom_histogram(aes(x=count), color="black", fill="coral", binwidth=4) + xlab("Number of individuals per subplot")
-ggplot(fo) + geom_boxplot(aes(y=count), color="black", fill="coral") + xlab("Number of individuals per subplot")
-
-
-# abundance isn't a fixed thing
-# But what about density (i.e. abundance per unit area) - an important life-history characteristic and one that varies over space
-# this is where we can see how much variation there is
-
-
-
-
-
-
-
-
-
-
-
-# -------------- get spatial aspects of data ------------
-
-# environment
-env = BCI.env %>%
-  dplyr::mutate(site_id = 1:nrow(BCI.env)) 
-
-# points in lat-lon
-points = data.frame(x=env$UTM.EW, y=env$UTM.NS)
-spts = SpatialPoints(points, proj4string=CRS("+proj=utm +zone=17 +datum=WGS84")) 
-
-# BCI topography (downloaded from here https://www.dropbox.com/s/yc4cbled4erfk7i/BCI_ColoredShaded_Relief.zip?dl=1)
-topo = raster::raster("C:/Users/roryj/Desktop/BCI_ColoredShaded_Relief/BCI_ColoredShaded_Relief.tif")
-topo = crop(topo, extent(spts) + 1500)
-
-# plot with even sampling grid
-topo %>%
-  as.data.frame(xy=TRUE) %>%
-  ggplot() +
-  geom_raster(aes(x, y, fill=BCI_ColoredShaded_Relief)) + 
-  coord_fixed() + 
-  scale_fill_viridis_c(option="cividis", name="Altitude (m)") +
-  theme_classic() + 
-  geom_point(data=points, aes(x, y))
-
-# sptransform and get lat lons
-spts = spTransform(spts, CRS("+proj=longlat +datum=WGS84"))
-env = cbind(env, coordinates(spts))
-
-
-# --------------- combine into BCI data --------------
-
-# bci data
-dd = BCI %>%
-  dplyr::mutate(site_id = 1:nrow(BCI)) %>%
-  reshape2::melt(id.vars = "site_id") %>%
-  dplyr::mutate(variable = unlist(lapply(strsplit(as.vector(variable), "[.]"), paste, collapse=" "))) %>%
-  left_join(env) %>%
-  dplyr::rename("species"=variable, "abundance"=value)
-
-
-# ----------- some descriptive stuff -----------
-
-# boxplots of site-level abundance from all species ordered by median abundance
-# some nice measures of different means and dispersion
-mm = dd %>% 
-  group_by(species) %>%
-  dplyr::summarise(abund = median(abundance)) %>%
-  dplyr::arrange(desc(abund))
-dd %>%
-  dplyr::mutate(species = factor(species, levels = mm$species, ordered=TRUE)) %>%
-  ggplot() + 
-  geom_boxplot(aes(species, abundance, group=species)) + 
-  theme_bw() +
-  theme(axis.text.x = element_text(angle=90))
-
-# summarise this - see how dispersion increases with higher mean values (poisson process)
-dd %>% 
-  group_by(species) %>%
-  dplyr::summarise(abundance_mean = mean(abundance),
-                   abundance_sd = sd(abundance)) %>%
-  ggplot() + 
-  geom_point(aes(abundance_mean, abundance_sd))
-
-# visualise for the top 25 most abundant species
-# nicely shows the ecological property of a few very abundant species and lots of low abundance species
-dd %>% 
-  dplyr::filter(species %in% mm$species[1:25]) %>%
-  dplyr::mutate(species = factor(species, levels = mm$species[1:25], ordered=TRUE)) %>%
-  ggplot() + 
-  geom_boxplot(aes(species, abundance, group=species), fill="coral1") + 
-  theme_bw() +
-  theme(axis.text.x = element_text(angle=90))
-
-
-
-# ---------- calculate some site-level diversity indices ----------
-
-# calculate plant diversity
-div = dd %>% 
+div = bci %>% 
   dplyr::group_by(site_id) %>%
-  dplyr::summarise(sr = sum(abundance > 0),
-                   shannon = vegan::diversity(abundance, index="shannon")) %>%
-  dplyr::left_join(env)
+  dplyr::summarise(sr = sum(count > 0), # SR
+                   shannon = vegan::diversity(count, index="shannon"),
+                   habitat = head(Habitat, 1))  # shannon
 
-# some visualisation of environmental characteristics versus richness and diversity
-# can see that young growth forests on average have SR within the bounds of old growth
-# but much lower diversity when you account for evenness (i.e. dominated by a few individuals)
+ggplot(div) + geom_boxplot(aes(y=sr))
+ggplot(div) + geom_boxplot(aes(y=shannon))
+
+# nicely shows that species richness in young (secondary) veg is similar to old growth
+# but diversity measured via shannon (accounting for evenness) is much lower
+# i.e. community is much more dominated by a few very abundant species
 p1 = div %>% 
   ggplot() + 
-  geom_boxplot(aes(Habitat, sr), fill="skyblue2") + 
+  geom_boxplot(aes(habitat, sr), fill="skyblue2") + 
   xlab("Habitat type") + ylab("Species richness") + 
   theme_minimal()
 p2 = div %>% 
   ggplot() + 
-  geom_boxplot(aes(Habitat, shannon), fill="skyblue2") + 
+  geom_boxplot(aes(habitat, shannon), fill="skyblue2") + 
   xlab("Habitat type") + ylab("Shannon diversity") + 
   theme_minimal()
 gridExtra::grid.arrange(p1, p2, nrow=1)
 
+########################
 
 
-# --------- show how increasing sample size improves inference of population mean -------
+# b. ANY OTHER IDEAS?
 
-sampleExample = function(species){
-  
-  ds = dd %>% dplyr::filter(species == species)
-  
-  # take 100 samples of 10
-  samp10 = c()
-  for(i in 1:100){ samp10 = c(samp10, mean(sample(ds$abundance, 5, replace=FALSE))) }
-  
-  # take 100 samples of 20
-  samp20 = c()
-  for(i in 1:100){ samp20 = c(samp20, mean(sample(ds$abundance, 10, replace=FALSE))) }
-  
-  # take 100 samples of 30
-  samp30 = c()
-  for(i in 1:100){ samp30 = c(samp30, mean(sample(ds$abundance, 30, replace=FALSE))) }
-  
-  # plot against true mean
-  for_plot = data.frame(
-    sample_size = rep(c(5, 10, 30), each=100),
-    sample_mean = c(samp10, samp20, samp30)
-  )
-  print(
-    for_plot %>%
-      ggplot() + 
-      ggforce::geom_sina(aes(x=factor(sample_size), sample_mean, col=factor(sample_size))) + 
-      geom_hline(yintercept=mean(ds$abundance), lty=2) +
-      theme_minimal() + ggtitle(species)
-  )
-}
 
-# run for various species from the most abundant to the least abundant
-sampleExample(mm$species[1])
-sampleExample(mm$species[3])
-sampleExample(mm$species[5])
-sampleExample(mm$species[5])
-sampleExample(mm$species[7])
-sampleExample(mm$species[100])
-sampleExample(mm$species[150])
 
-sampleExample(mm$species[150])
